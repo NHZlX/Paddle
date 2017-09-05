@@ -18,5 +18,6 @@ cc_library(paddle_pybind SHARED
     fill_zeros_like_op
     lookup_table_op
     scale_op
+    transpose_op
     minus_op)
 endif(WITH_PYTHON)
