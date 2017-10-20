@@ -68,7 +68,6 @@ void doOneMaxPoolingWithMaskOutputTest(MatrixPtr& inputMat,
   std::vector<DataLayerPtr> dataLayers;
   LayerMap layerMap;
   vector<Argument> datas;
-  ;
   initDataLayer(config,
                 &dataLayers,
                 &datas,
@@ -85,7 +84,6 @@ void doOneMaxPoolingWithMaskOutputTest(MatrixPtr& inputMat,
   LayerPtr maxPoolingWithMaskOutputLayer;
   initTestLayer(config, &layerMap, &parameters, &maxPoolingWithMaskOutputLayer);
   maxPoolingWithMaskOutputLayer->forward(PASS_GC);
-  ;
   checkMatrixEqual(maxPoolingWithMaskOutputLayer->getOutput("mask").value,
                    maskMat);
 }

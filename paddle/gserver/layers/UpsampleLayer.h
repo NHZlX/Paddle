@@ -16,15 +16,17 @@ limitations under the License. */
 
 #include <vector>
 #include "paddle/math/Matrix.h"
+#include "Layer.h"
+#include "paddle/utils/Logging.h"
+#include "paddle/utils/Stat.h"
 
 namespace paddle {
 
 /**
- * @brief A subclass of convolution layer.
- * This layer expands input and use matrix multiplication to
- * calculate convolution operation.
- *
- * The config file api is img_conv_layer.
+ * This layer transpose the pooling process.
+ * It takes two input, the first input is the data, and 
+ * the second is the mask data from the max-pool-with-mask layer.
+ * 
  */
 
 class UpsampleLayer : public Layer {
@@ -42,10 +44,11 @@ public:
   size_t getOutputSize();
 
 protected:
-  size_t scale_, padOutX_, upsampleSize_;
-  size_t scaleY_;
-  size_t padOutY_;
-  size_t upsampleSizeY_;
+  size_t scale_, scaleY_;
+  size_t upsampleSize_, upsampleSizeY_;
+  size_t padOutX_, padOutY_;
+  size_t imgSize_, imgSizeY_;
+  size_t channels_;
 };
 
 }  // namespace paddle

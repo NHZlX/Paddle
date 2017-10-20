@@ -322,12 +322,13 @@ message ClipConfig {
 }
 
 message UpsampleConfig {
-  optional uint32 scale = 1 [ default = 2 ];
-  optional uint32 scale_y = 2 [ default = 2 ];
-  optional bool pad_out_x = 3 [ default = false ];
-  optional bool pad_out_y = 4 [ default = false ];
-  optional upsample_size = 5;
-  optional upsample_size_y = 6;
+  required ImageConfig image_conf = 1;
+  optional uint32 scale = 2 [ default = 2 ];
+  optional uint32 scale_y = 3 [ default = 2 ];
+  optional bool pad_out_x = 4 [ default = false ];
+  optional bool pad_out_y = 5 [ default = false ];
+  optional uint32 upsample_size = 6;
+  optional uint32 upsample_size_y = 7;
 }
 
 message LayerInputConfig {

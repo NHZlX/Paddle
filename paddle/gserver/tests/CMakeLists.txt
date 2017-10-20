@@ -73,6 +73,14 @@ add_unittest_without_exec(test_PriorBox
 add_test(NAME test_PriorBox
     COMMAND test_PriorBox)
 
+################# test_Upsample #################
+add_unittest_without_exec(test_UpsampleLayer
+    test_UpsampleLayer.cpp
+    LayerGradUtil.cpp)
+
+add_test(NAME test_UpsampleLayer
+    COMMAND test_UpsampleLayer)
+
 ################# test_MaxPoolingWithMaskOutput #################
 add_unittest_without_exec(test_MaxPoolingWithMaskOutput
     test_MaxPoolingWithMaskOutput.cpp

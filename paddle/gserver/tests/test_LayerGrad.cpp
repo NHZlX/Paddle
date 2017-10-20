@@ -290,6 +290,7 @@ TEST(Layer, BilinearInterpLayer) {
   }
 }
 
+
 TEST(Layer, concat) {
   TestConfig config;
   config.biasSize = 0;
@@ -1344,6 +1345,25 @@ TEST(Layer, SpatialPyramidPoolLayer) {
     }
   }
 }
+
+TEST(Layer, upsample) {
+    TestConfig config;
+    config.biasSize = 0;
+    config.layerConfig.set_type("upsample");
+    config.inputDefs.push_back({INPUT_DATA, "layer_0", 4, 0});
+    LayerInputConfig* input = config.layerConfig.add_inputs();
+    config.inputDefs.push_back({INPUT_DATA, "layer_1", 4, 0});
+    config.layerConfig.add_inputs();
+    UpsampleConfig* upsampleConfig = input->mutable_upsample_conf();
+    upsampleConfig->set_scale(2);
+    ImageConfig* imageConfig = upsampleConfig->mutable_image_conf();
+    imageConfig->set_channels(1);
+    imageConfig->set_img_size(2);
+    imageConfig->set_img_size_y(2);
+    config.layerConfig.set_size(2 * 4 * 4);
+    testLayerGrad(config, "upsample", 1, false, false);
+}
+
 
 TEST(Layer, rankCostLayer) {
   TestConfig config;

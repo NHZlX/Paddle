@@ -13,21 +13,36 @@ See the License for the specific language governing permissions and
     limitations under the License. */
 
 #include "UpsampleLayer.h"
+#include "iostream"
 
 namespace paddle {
 
-REGISTER_LAYER(scaling, ScalingLayer);
+REGISTER_LAYER(upsample, UpsampleLayer);
+
+size_t UpsampleLayer::getOutputSize() {
+    if (upsampleSize_ == 0) {
+        upsampleSize_ = imgSize_ * scale_ - static_cast<int>(padOutX_);
+        upsampleSizeY_ = imgSizeY_ * scaleY_ - static_cast<int>(padOutY_);
+    }
+    return upsampleSize_ * upsampleSizeY_ * channels_;
+}
 
 bool UpsampleLayer::init(const LayerMap& layerMap,
                          const ParameterMap& parameterMap) {
   Layer::init(layerMap, parameterMap);
   CHECK_EQ(inputLayers_.size(), 2U);
-  CHECK_EQ(config_.inputs_size(), 1);
-  const UpsampleConfig& conf = config_.inputs(0).upsample_conf();
-  CHECK((conf.has_upsample_size() && conf.has_upsample_size_y()) ||
+  CHECK_EQ(config_.inputs_size(), 2);
+  const auto& conf = config_.inputs(0).upsample_conf();
+  const auto& img_conf = conf.image_conf();
+
+  imgSizeY_ = img_conf.has_img_size_y() ?
+                             img_conf.img_size_y() : img_conf.img_size();
+  imgSize_ = img_conf.img_size();
+  channels_ = img_conf.channels();
+
+  CHECK((conf.has_upsample_size()) ||
         (conf.has_scale()))
-      << "scale or scale & scale_y are required else "
-      << "upsample_size or upsample_size & upsample_size_y are required";
+        << "scale or upsample_size is required.";
   if (conf.has_upsample_size()) {
     upsampleSize_ = conf.upsample_size();
     upsampleSizeY_ = upsampleSize_;
@@ -37,45 +52,46 @@ bool UpsampleLayer::init(const LayerMap& layerMap,
   } else {
     if (!conf.has_scale_y()) {
       scale_ = scaleY_ = conf.scale_y();
-      CHECK_GT(scale_, 1);
+      CHECK_GT(static_cast<int>(scale_), 1);
     } else {
       scale_ = conf.scale();
       scaleY_ = conf.scale_y();
     }
     padOutX_ = conf.pad_out_x();
     padOutY_ = conf.pad_out_y();
-    CHECK(!padOutX_ || scale_)
-        << "Output Height padding compensation requires scale_ == 2";
-    CHECK(!padOutY_ || scaleY_)
-        << "Output Width padding compensation requires scale_ == 2";
-    upsampleSize_ = upsampleSizeY_ = -1;
+    CHECK(!padOutX_ || scale_ == 2)
+        << "Output height padding compensation requires scale_ == 2";
+    CHECK(!padOutY_ || scaleY_ == 2)
+        << "Output width padding compensation requires scaleY_ == 2";
+    upsampleSize_ = upsampleSizeY_ = 0;
   }
+  return true;
 }
-// getSize()
 
 void UpsampleLayer::forward(PassType passType) {
   Layer::forward(passType);
 
-  MatrixPtr inputMatP = getInputValue(0);
-  MatrixPtr maskMatP = getInputValue(1);
+  MatrixPtr input = getInputValue(0);
+  MatrixPtr mask = inputLayers_[1]->getOutput("").value;
 
-  size_t batchSize = inputMatP->getHeight();
-  size_t dataDim = inputMatP->getWidth();
+  size_t batchSize = input->getHeight();
+  size_t outSize = getOutputSize();
 
-  CHECK_EQ(inputMatP->getWidth(), maskMatP->getWidth());
-  CHECK_EQ(weightV->getHeight(), batchSize);
+  CHECK_EQ(input->getWidth(), mask->getWidth());
+  CHECK_EQ(mask->getHeight(), batchSize);
+  resetOutput(batchSize, outSize);
 
-  resetOutput(batchSize, dataDim);
-
-  MatrixPtr outV = getOutputValue();
-  outV->upsampleForward(0, *inV1, *weightV);
+  MatrixPtr output = getOutputValue();
+  output->upsampleForward(*input, *mask, imgSize_, imgSizeY_, channels_,
+                        upsampleSize_, upsampleSizeY_);
 }
 
 void UpsampleLayer::backward(const UpdateCallback& callback) {
-  MatrixPtr mask = getInputValue(1);
+  MatrixPtr mask = inputLayers_[1]->getOutput("").value;
   MatrixPtr inputGrad = getInputGrad(0);
-  MatrixPtr outGrad = getOutputGrad();
-  outGrad->upsampleBackward();
+  MatrixPtr outputGrad = getOutputGrad();
+  inputGrad->upsampleBackward(*outputGrad, *mask, imgSize_, imgSizeY_,
+                              channels_, upsampleSize_, upsampleSizeY_);
 }
 
 }  // namespace paddle
