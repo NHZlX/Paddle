@@ -108,7 +108,8 @@ bool ExpandConvLayer::init(const LayerMap &layerMap,
 #endif
     }
 
-    if (FLAGS_use_nnpack && !isDeconv_ && !useDilation) {
+    if (FLAGS_use_nnpack && !isDeconv_ 
+        && !useDilation && !isDepthwiseConv(channels_[i], groups_[i])) {
       createFunction(forward_,
                      "NNPACKConv",
                      FuncConfig()
