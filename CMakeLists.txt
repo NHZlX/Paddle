@@ -54,6 +54,7 @@ option(WITH_C_API       "Compile PaddlePaddle with C-API(Prediction)"   OFF)
 option(WITH_GOLANG      "Compile PaddlePaddle with GOLANG"              OFF)
 option(GLIDE_INSTALL    "Download and install go dependencies "         ON)
 option(USE_NNPACK       "Compile PaddlePaddle with NNPACK library"      OFF)
+option(WITH_DISTRIBUTE  "Compile with grpc distributed support"         OFF)
 option(USE_EIGEN_FOR_BLAS   "Use matrix multiplication in Eigen"        OFF)
 
 # CMAKE_BUILD_TYPE
@@ -67,9 +68,6 @@ if(ANDROID OR IOS)
     if(ANDROID)
         if(${CMAKE_SYSTEM_VERSION} VERSION_LESS "16")
             message(FATAL_ERROR "Unsupport standalone toolchains with Android API level lower than 16")
-        elseif(${CMAKE_SYSTEM_VERSION} VERSION_LESS "21")
-            # TODO: support glog for Android api 16 ~ 19 in the future
-            message(WARNING "Using the unofficial git repository <https://github.com/Xreki/glog.git> instead")
         endif()
     endif()
 
@@ -133,6 +131,8 @@ include(external/any)       # download libn::any
 include(external/eigen)     # download eigen3
 include(external/pybind11)  # download pybind11
 include(external/nccl)
+include(external/cares)
+include(external/grpc)
 
 include(cudnn)              # set cudnn libraries, must before configure
 include(configure)          # add paddle env configuration
