@@ -131,7 +131,7 @@ TEST(Layer, maxPoolingWithMaskOutputLayerFwd) {
 
   tempGradMat = Matrix::create(1, 128, false, useGpu);
   tempGradMat->randomizeUniform();
-  real* data = inputMat->getData();
+  // real* data = inputMat->getData();
   real* tempGradData = tempGradMat->getData();
 
   LayerPtr upsampleLayerCPU =
