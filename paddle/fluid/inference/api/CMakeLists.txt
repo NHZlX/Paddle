@@ -59,6 +59,8 @@ cc_library(paddle_inference_tensorrt_subgraph_engine
         DEPS paddle_inference_api analysis tensorrt_engine paddle_inference_api paddle_fluid_api tensorrt_converter)
 
 inference_api_test(test_api_tensorrt_subgraph_engine SRC api_tensorrt_subgraph_engine_tester.cc ARGS test_word2vec)
+cc_test(tensorrt_model_test SRCS tensorrt_model_test.cc DEPS
+paddle_inference_tensorrt_subgraph_engine)
 endif()
 
 if (WITH_ANAKIN) # only needed in CI
