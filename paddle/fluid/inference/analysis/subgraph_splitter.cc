@@ -153,7 +153,7 @@ void SubGraphFuse::ReplaceNodesWithSubGraphs() {
       inlink_or_outlink_cleaner(o->inlinks);
     }
   }
-  FilterRedundantOutputOfSubGraph(graph_);
+ // FilterRedundantOutputOfSubGraph(graph_);
 }
 
 }  // namespace analysis

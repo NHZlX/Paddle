@@ -21,6 +21,7 @@ limitations under the License. */
 #include "paddle/fluid/framework/scope.h"
 #include "paddle/fluid/inference/tensorrt/engine.h"
 #include "paddle/fluid/inference/utils/singleton.h"
+#include "paddle/fluid/framework/tensor_util.h"
 
 namespace paddle {
 namespace inference {

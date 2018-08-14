@@ -53,11 +53,12 @@ class TensorRTEngine : public EngineBase {
 
   TensorRTEngine(int max_batch, int max_workspace,
                  cudaStream_t* stream = nullptr,
-                 nvinfer1::ILogger& logger = NaiveLogger::Global())
+                 int device = 0, nvinfer1::ILogger& logger = NaiveLogger::Global())
       : max_batch_(max_batch),
         max_workspace_(max_workspace),
         stream_(stream ? stream : &default_stream_),
-        logger_(logger) {
+        logger_(logger),  device_(device) {
+    freshDeviceId();
     cudaStreamCreate(&default_stream_);
   }
 
@@ -119,6 +120,7 @@ class TensorRTEngine : public EngineBase {
   nvinfer1::INetworkDefinition* network() { return infer_network_.get(); }
   void SetRuntimeBatch(size_t batch_size);
   int GetRuntimeBatch();
+  int GetDevice() {return device_;}
 
  private:
   // the max batch size
@@ -141,6 +143,8 @@ class TensorRTEngine : public EngineBase {
   std::unordered_map<std::string /*name*/, nvinfer1::ITensor* /*ITensor*/>
       itensor_map_;
 
+  int device_;
+
   // TensorRT related internal members
   template <typename T>
   struct Destroyer {
@@ -156,6 +160,8 @@ class TensorRTEngine : public EngineBase {
   infer_ptr<nvinfer1::INetworkDefinition> infer_network_;
   infer_ptr<nvinfer1::ICudaEngine> infer_engine_;
   infer_ptr<nvinfer1::IExecutionContext> infer_context_;
+
+  void freshDeviceId();
 };  // class TensorRTEngine
 
 // Add an layer__ into engine__ with args ARGS.
@@ -188,8 +194,8 @@ class TRT_EngineManager {
 
   // Create or get an engine called `name`
   TensorRTEngine* Create(int max_batch, int max_workspace, cudaStream_t* stream,
-                         const std::string& name) {
-    auto* p = new TensorRTEngine(max_batch, max_workspace, stream);
+                         const std::string& name, int gpu_device = 0) {
+    auto* p = new TensorRTEngine(max_batch, max_workspace, stream, gpu_device);
     engines_[name].reset(p);
     return p;
   }

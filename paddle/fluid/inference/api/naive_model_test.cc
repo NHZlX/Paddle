@@ -16,21 +16,20 @@
 #include <glog/logging.h>
 #include <gtest/gtest.h>
 #include <chrono>
-#include "paddle/fluid/inference/analysis/analyzer.h"
 #include "paddle/fluid/inference/api/paddle_inference_api.h"
-#include "paddle/fluid/inference/tensorrt/convert/op_converter.h"
 
 namespace paddle {
 
-DEFINE_string(dirname, "./checkouts2", "Directory of the inference model.");
-//DEFINE_string(dirname, "./checkouts_resnet50_softmax_prune",
-//              "Directory of the inference model.");
+// DEFINE_string(dirname, "./checkouts3", "Directory of the inference model.");
+DEFINE_string(dirname, "./checkouts_resnet50_softmax_prune",
+              "Directory of the inference model.");
 
-TensorRTConfig GetConfig() {
-  TensorRTConfig config;
+NativeConfig GetConfig() {
+  NativeConfig config;
   config.model_dir = FLAGS_dirname;
+  LOG(INFO) << "dirname  " << config.model_dir;
+  config.fraction_of_gpu_memory = 0.15;
   config.use_gpu = true;
-  config.fraction_of_gpu_memory = 0.3;
   config.device = 0;
   return config;
 }
@@ -45,19 +44,16 @@ double time_diff(Time t1, Time t2) {
 }
 
 TEST(alexnet, tensrrt) {
-  TensorRTConfig config = GetConfig();
-  auto predictor =
-      CreatePaddlePredictor<TensorRTConfig,
-                            PaddleEngineKind::kAutoMixedTensorRT>(config);
-  //float data[1 * 3 * 224 * 224] = {1.0f};
-  float data[1 * 3 * 3 * 3] = {1.0f};
+  NativeConfig config = GetConfig();
+  auto predictor = CreatePaddlePredictor<NativeConfig>(config);
+  float data[1 * 3 * 224 * 224] = {1.0f};
+  // float data[1 * 3 * 3 * 3] = {1.0f};
   PaddleTensor tensor;
   tensor.name = "input_0";
-  //tensor.shape = std::vector<int>({1, 3, 224, 224});
-  tensor.shape = std::vector<int>({1, 3, 3, 3});
+  // tensor.shape = std::vector<int>({1, 3, 224, 224});
+  tensor.shape = std::vector<int>({1, 3, 224, 224});
   tensor.data =
-      PaddleBuf(static_cast<void*>(data), sizeof(float) * (3 * 3 * 3));
-     //PaddleBuf(static_cast<void*>(data), sizeof(float) * (3 * 224 * 224));
+      PaddleBuf(static_cast<void*>(data), sizeof(float) * (3 * 224 * 224));
   tensor.dtype = PaddleDType::FLOAT32;
 
   // For simplicity, we set all the slots with the same data.
@@ -80,7 +76,7 @@ TEST(alexnet, tensrrt) {
 
   auto time2 = time(); 
 
-  std::cout << "predict cost: " << time_diff(time1, time2) / 100.0 << "ms" << std::endl;
+  std::cout << "predict cost: " << time_diff(time1, time2) / 1.0 << "ms" << std::endl;
   float* data_o = static_cast<float*>(outputs[0].data.data());
   for (size_t j = 0; j < outputs[0].data.length() / sizeof(float); ++j) {
     LOG(INFO) << "output[" << j << "]: " << data_o[j];
@@ -88,10 +84,3 @@ TEST(alexnet, tensrrt) {
 }
 
 }  // namespace paddle
-USE_TRT_CONVERTER(elementwise_add_weight);
-USE_TRT_CONVERTER(mul);
-USE_TRT_CONVERTER(conv2d);
-USE_TRT_CONVERTER(relu);
-USE_TRT_CONVERTER(fc);
-USE_TRT_CONVERTER(pool2d);
-USE_TRT_CONVERTER(softmax);

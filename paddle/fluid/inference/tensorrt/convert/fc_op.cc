@@ -12,12 +12,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License. */
 
-#include "paddle/fluid/framework/eigen.h"
-#include "paddle/fluid/framework/lod_tensor.h"
-#include "paddle/fluid/framework/op_registry.h"
 #include "paddle/fluid/inference/tensorrt/convert/op_converter.h"
-#include "paddle/fluid/inference/tensorrt/engine.h"
-#include "paddle/fluid/platform/place.h"
 
 namespace paddle {
 namespace inference {
@@ -73,12 +68,19 @@ class FcOpConverter : public OpConverter {
     auto* Y_t = Y_v->GetMutable<framework::LoDTensor>();
     // This may trigger a GPU->CPU copy, because TRT's weight can only be
     // assigned from CPU memory, that can't be avoided.
-    auto* weight_data = Y_t->mutable_data<float>(platform::CPUPlace());
-    PADDLE_ENFORCE_EQ(Y_t->dims().size(), 2UL);  // a matrix
-    size_t n_output = Y_t->dims()[1];
+    platform::CPUPlace cpu_place;
+    framework::LoDTensor weight_tensor;
+    weight_tensor.Resize(Y_t->dims());
+    TensorCopySync((*Y_t), cpu_place, &weight_tensor);
+    
+
+    auto* weight_data = weight_tensor.mutable_data<float>(platform::CPUPlace());
+    
+    PADDLE_ENFORCE_EQ(weight_tensor.dims().size(), 2UL);  // a matrix
+    size_t n_output = weight_tensor.dims()[1];
 
     framework::LoDTensor tmp;
-    tmp.Resize(Y_t->dims());
+    tmp.Resize(weight_tensor.dims());
     memcpy(tmp.mutable_data<float>(platform::CPUPlace()), weight_data,
            Y_t->dims()[0] * Y_t->dims()[1] * sizeof(float));
     TensorRTEngine::Weight weight{nvinfer1::DataType::kFLOAT,

@@ -12,7 +12,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License. */
 
-#include "paddle/fluid/framework/op_registry.h"
 #include "paddle/fluid/inference/tensorrt/convert/op_converter.h"
 
 namespace paddle {
@@ -40,10 +39,20 @@ class ElementwiseWeightOpConverter : public OpConverter {
     auto* Y_v = scope.FindVar(op_desc.Input("Y").front());
     PADDLE_ENFORCE_NOT_NULL(Y_v);
     auto* Y_t = Y_v->GetMutable<framework::LoDTensor>();
-    auto* weight_data = Y_t->mutable_data<float>(platform::CPUPlace());
+
+    platform::CPUPlace cpu_place;
+    framework::LoDTensor weight_tensor;
+    weight_tensor.Resize(Y_t->dims());
+    TensorCopySync((*Y_t), cpu_place, &weight_tensor);
+   
+    auto* weight_data = weight_tensor.mutable_data<float>(platform::CPUPlace());
+    std::cout << "elementwise output: " << std::endl;
+    for (int i = 0; i < weight_tensor.memory_size() / sizeof(float); i++) {
+      std::cout << weight_data[i] << std::endl;
+    }
     auto scale_mode = nvinfer1::ScaleMode::kELEMENTWISE;
 
-    std::vector<int> dims_y = framework::vectorize2int(Y_t->dims());
+    std::vector<int> dims_y = framework::vectorize2int(weight_tensor.dims());
     if (static_cast<int>(dims_y.size()) == dims_x.nbDims + 1) {
       if (dims_y[0] == 1) dims_y.erase(dims_y.begin());
     }
@@ -72,7 +81,7 @@ class ElementwiseWeightOpConverter : public OpConverter {
 
     TensorRTEngine::Weight shift_weights{nvinfer1::DataType::kFLOAT,
                                          static_cast<void*>(weight_data),
-                                         Y_t->memory_size() / sizeof(float)};
+                                         weight_tensor.memory_size() / sizeof(float)};
     TensorRTEngine::Weight scale_weights{nvinfer1::DataType::kFLOAT, nullptr,
                                          0};
     TensorRTEngine::Weight power_weights{nvinfer1::DataType::kFLOAT, nullptr,

@@ -28,6 +28,7 @@ limitations under the License. */
 #include "paddle/fluid/inference/tensorrt/convert/op_converter.h"
 #include "paddle/fluid/inference/tensorrt/engine.h"
 #include "paddle/fluid/inference/utils/singleton.h"
+#include "paddle/fluid/framework/tensor_util.h"
 
 namespace paddle {
 namespace inference {
@@ -48,11 +49,19 @@ void RandomizeTensor(framework::LoDTensor* tensor, const platform::Place& place,
   auto dims = tensor->dims();
   size_t num_elements = analysis::AccuDims(dims, dims.size());
   PADDLE_ENFORCE_GT(num_elements, 0);
-  auto* data = tensor->mutable_data<float>(place);
+
+  // Create temp tensor
+  platform::CPUPlace cpu_place;
+
+  framework::LoDTensor temp_tensor;
+  temp_tensor.Resize(dims);
+  auto *temp_data = temp_tensor.mutable_data<float>(cpu_place);
 
   for (size_t i = 0; i < num_elements; i++) {
-    *(data + i) = random(0., 1.);
+    *(temp_data + i) = random(0., 1.);
   }
+
+  TensorCopySync(temp_tensor, place, tensor);
 }
 
 /*
@@ -102,8 +111,8 @@ class TRTConvertValidation {
   }
 
   void DeclVar(const std::string& name, const std::vector<int> dim_vec) {
-    platform::CPUPlace place;
-    platform::CPUDeviceContext ctx(place);
+    platform::CUDAPlace place;
+    platform::CUDADeviceContext ctx(place);
 
     // There is no batchsize in ITensor's shape, but We should add it to
     // tensor's shape of fluid. If the variable is not parameter and the
@@ -142,7 +151,7 @@ class TRTConvertValidation {
       PADDLE_ENFORCE(var);
       auto tensor = var->GetMutable<framework::LoDTensor>();
 
-      engine_->SetInputFromCPU(
+      engine_->SetInputFromGPU(
           input, static_cast<void*>(tensor->data<void>()),
           sizeof(float) *
               analysis::AccuDims(tensor->dims(), tensor->dims().size()));
@@ -152,8 +161,8 @@ class TRTConvertValidation {
   void Execute(int batch_size) {
     // Execute Fluid Op
     PADDLE_ENFORCE_LE(batch_size, max_batch_size_);
-    platform::CPUPlace place;
-    platform::CPUDeviceContext ctx(place);
+    platform::CUDAPlace place;
+    platform::CUDADeviceContext ctx(place);
     op_->Run(scope_, place);
     // Execute TRT.
     engine_->Execute(batch_size);

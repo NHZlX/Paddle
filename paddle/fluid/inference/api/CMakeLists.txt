@@ -50,8 +50,13 @@ cc_test(test_paddle_inference_api
         SRCS api_tester.cc
         DEPS paddle_inference_api)
 
+cc_test(naive_model_test
+        SRCS naive_model_test.cc
+        DEPS paddle_inference_api paddle_fluid_api)
+
 inference_api_test(test_api_impl SRC api_impl_tester.cc
                     ARGS test_word2vec test_image_classification)
+
 
 if(WITH_GPU AND TENSORRT_FOUND)
 cc_library(paddle_inference_tensorrt_subgraph_engine
