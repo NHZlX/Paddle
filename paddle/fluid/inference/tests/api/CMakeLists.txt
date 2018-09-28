@@ -99,4 +99,13 @@ if(WITH_GPU AND TENSORRT_FOUND)
    cc_test(test_trt_models SRCS trt_models_tester.cc  
      ARGS --dirname=${TRT_MODEL_INSTALL_DIR}/trt_test_models
      DEPS paddle_inference_tensorrt_subgraph_engine)
+   cc_test(test_plate SRCS plate_tester.cc 
+     DEPS paddle_inference_tensorrt_subgraph_engine)
+
+   cc_test(trt_test_plate SRCS trt_plate_tester.cc 
+     DEPS paddle_inference_tensorrt_subgraph_engine)
+   cc_test(ocr_plate SRCS ocr_plate.cc
+     DEPS paddle_inference_tensorrt_subgraph_engine)
+   cc_test(trt_ocr_plate SRCS trt_ocr_plate.cc
+     DEPS paddle_inference_tensorrt_subgraph_engine)
 endif()

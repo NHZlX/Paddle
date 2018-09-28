@@ -178,7 +178,7 @@ class TRTConvertValidation {
     cudaStreamSynchronize(*engine_->stream());
 
     ASSERT_FALSE(op_desc_->OutputArgumentNames().empty());
-    const size_t output_space_size = 3000;
+    const size_t output_space_size = 30000;
     for (const auto& output : op_desc_->OutputArgumentNames()) {
       if (neglected_output.count(output)) continue;
       std::vector<float> fluid_out;
