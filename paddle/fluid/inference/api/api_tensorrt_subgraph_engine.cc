@@ -33,6 +33,16 @@ class TensorRTSubgraphPredictor : public NativePaddlePredictor {
       : NativePaddlePredictor(config), config_(config) {}
 
   bool Init(const std::shared_ptr<framework::Scope>& parent_scope) {
+#if !defined(_WIN32)
+  if (FLAGS_profile) {
+    LOG(WARNING) << "Profiler is actived, might affect the performance";
+    LOG(INFO) << "You can turn off by set gflags '-profile false'";
+
+    auto tracking_device = config_.use_gpu ? platform::ProfilerState::kAll
+                                           : platform::ProfilerState::kCPU;
+    platform::EnableProfiler(tracking_device);
+  }
+#endif
     FLAGS_IA_enable_tensorrt_subgraph_engine = true;
     VLOG(3) << "Predictor::init()";
     if (config_.use_gpu) {
@@ -185,3 +195,4 @@ USE_TRT_CONVERTER(softmax);
 USE_TRT_CONVERTER(batch_norm);
 USE_TRT_CONVERTER(concat);
 USE_TRT_CONVERTER(dropout);
+USE_TRT_CONVERTER(pad);

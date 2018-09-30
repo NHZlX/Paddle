@@ -22,7 +22,6 @@ double time_diff(Time t1, Time t2) {
 }
 
 DEFINE_string(dirname, "./", "Directory of the inference model.");
-std::unique_ptr<paddle::PaddlePredictor> fluid_predictor;
 
 void convert_output(const std::vector<paddle::PaddleTensor> &tensors,
                     std::vector<std::vector<float> > &datas,
@@ -38,7 +37,7 @@ void convert_output(const std::vector<paddle::PaddleTensor> &tensors,
     }
 }
 
-std::string fluid_predict() {
+std::string fluid_predict(paddle::PaddlePredictor *pd_predictor) {
     int height = 100;
     int width = 200;
     std::vector<paddle::PaddleTensor> input_tensors;  
@@ -146,10 +145,10 @@ std::string fluid_predict() {
     input_tensors.push_back(init_scores_tensor);
     input_tensors.push_back(position_encoding_tensor);
 	std::cerr << "before prediction\n";
-    fluid_predictor->Run(input_tensors, &output_tensors);
+    pd_predictor->Run(input_tensors, &output_tensors);
     auto time1 = time(); 
-    for(int i = 0; i < 1000; i++)  {
-      fluid_predictor->Run(input_tensors, &output_tensors);
+    for(int i = 0; i < 10; i++)  {
+      pd_predictor->Run(input_tensors, &output_tensors);
     }
     auto time2 = time(); 
     std::cout <<"batch: " << 1 << " predict cost: " << time_diff(time1, time2) / 100.0 << "ms" << std::endl;
@@ -174,9 +173,11 @@ std::string fluid_predict() {
     
 int main(int argc, char** argv) {
     //1. init image recognition model
+    google::ParseCommandLineFlags(&argc, &argv, true);
     paddle::NativeConfig paddle_config;
+
     float fraction_of_gpu_memory = 0.3f;
-    bool use_gpu = false;
+    bool use_gpu = true;
     std::string prog_file =  "./InceptionV3_Model/model";
     std::string param_file = "./InceptionV3_Model/params";
     std::cout << prog_file << std::endl;
@@ -187,8 +188,8 @@ int main(int argc, char** argv) {
     paddle_config.prog_file = prog_file;
     paddle_config.param_file = param_file;
     paddle_config.specify_input_name = true;
-    fluid_predictor =
-      paddle::CreatePaddlePredictor<paddle::NativeConfig, paddle::PaddleEngineKind::kNative>(paddle_config);
+    std::unique_ptr<paddle::PaddlePredictor> fluid_predictor = 
+          paddle::CreatePaddlePredictor<paddle::NativeConfig, paddle::PaddleEngineKind::kNative>(paddle_config);
 
 
     double total_time_cost = 0.0f;
@@ -196,7 +197,7 @@ int main(int argc, char** argv) {
 
      timeval start_time;
 	gettimeofday(&start_time, NULL);        
-	std::string predict_str = fluid_predict();
+	std::string predict_str = fluid_predict(fluid_predictor.get());
 	timeval end_time;
 	gettimeofday(&end_time, NULL);
 	double time_cost = (end_time.tv_sec - start_time.tv_sec) * 1000.0 + (end_time.tv_usec - start_time.tv_usec) / 1000.0;

@@ -34,6 +34,8 @@
 #include "paddle/fluid/platform/init.h"
 #include "paddle/fluid/platform/profiler.h"
 
+DECLARE_bool(profile);
+
 namespace paddle {
 
 class NativePaddlePredictor : public PaddlePredictor {

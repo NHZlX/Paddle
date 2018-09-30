@@ -2,6 +2,8 @@
 nv_library(tensorrt_converter
   SRCS mul_op.cc conv2d_op.cc fc_op.cc pool2d_op.cc elementwise_op.cc
 batch_norm_op.cc activation_op.cc softmax_op.cc concat_op.cc dropout_op.cc
+reshape_op.cc transpose_op.cc scale_op.cc
+pad_op.cc
   DEPS tensorrt_engine operator scope framework_proto op_registry)
 
 nv_test(test_op_converter SRCS test_op_converter.cc DEPS
@@ -26,6 +28,16 @@ nv_test(test_trt_batch_norm_op SRCS test_batch_norm_op.cc batch_norm_op.cc
         DEPS ${FLUID_CORE_MODULES} tensorrt_engine batch_norm_op SERIAL)
 nv_test(test_trt_concat_op SRCS test_concat_op.cc concat_op.cc
         DEPS ${FLUID_CORE_MODULES} tensorrt_engine concat_op SERIAL)
-
 nv_test(test_trt_dropout_op SRCS test_dropout_op.cc dropout_op.cc
         DEPS ${FLUID_CORE_MODULES} tensorrt_engine dropout_op SERIAL)
+
+nv_test(test_trt_pad_op SRCS test_pad_op.cc pad_op.cc
+        DEPS ${FLUID_CORE_MODULES} tensorrt_engine pad_op SERIAL)
+nv_test(test_trt_reshape_op SRCS test_reshape_op.cc reshape_op.cc
+        DEPS ${FLUID_CORE_MODULES} tensorrt_engine reshape_op SERIAL)
+nv_test(test_trt_transpose_op SRCS test_transpose_op.cc transpose_op.cc
+        DEPS ${FLUID_CORE_MODULES} tensorrt_engine transpose_op SERIAL)
+nv_test(test_trt_matmul_op SRCS test_matmul_op.cc matmul_op.cc
+        DEPS ${FLUID_CORE_MODULES} tensorrt_engine matmul_op SERIAL)
+nv_test(test_trt_scale_op SRCS test_scale_op.cc scale_op.cc
+        DEPS ${FLUID_CORE_MODULES} tensorrt_engine scale_op SERIAL)
