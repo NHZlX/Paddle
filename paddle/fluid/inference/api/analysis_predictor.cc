@@ -809,6 +809,7 @@ USE_TRT_CONVERTER(conv2d_transpose);
 USE_TRT_CONVERTER(leaky_relu);
 #endif
 
+/*
 USE_ANAKIN_CONVERTER(mul);
 USE_ANAKIN_CONVERTER(fc);
 USE_ANAKIN_CONVERTER(conv2d);
@@ -830,3 +831,4 @@ USE_ANAKIN_CONVERTER(detection_out);
 USE_ANAKIN_CONVERTER(density_prior_box);
 USE_ANAKIN_CONVERTER(dropout);
 USE_ANAKIN_CONVERTER(sum);
+*/
