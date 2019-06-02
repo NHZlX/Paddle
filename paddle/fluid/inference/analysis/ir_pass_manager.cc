@@ -91,6 +91,7 @@ void IRPassManager::CreatePasses(Argument *argument,
                          AnalysisConfig::Precision::kInt8;
 
       pass->Set("enable_int8", new bool(enable_int8));
+      pass->Set("predictor_id", new int(argument->predictor_id()));
 
       bool use_static_engine = argument->tensorrt_use_static_engine();
       bool model_from_memory = argument->model_from_memory();

@@ -396,6 +396,8 @@ void AnalysisPredictor::OptimizeInferenceProgram() {
   ARGUMENT_CHECK_FIELD((&argument_), ir_analyzed_program);
   inference_program_.reset(
       new framework::ProgramDesc(argument_.ir_analyzed_program()));
+  argument_.ReleasePart();
+  config_.ReleasePart();
   LOG(INFO) << "== optimize end ==";
 }
 
@@ -403,6 +405,8 @@ template <>
 std::unique_ptr<PaddlePredictor> CreatePaddlePredictor<
     AnalysisConfig, PaddleEngineKind::kAnalysis>(const AnalysisConfig &config) {
   VLOG(3) << "create AnalysisConfig";
+  PADDLE_ENFORCE(config.is_valid(),
+                 "Note: Each config can only be used for one predictor.");
   if (config.use_gpu()) {
     // 1. GPU memory
     PADDLE_ENFORCE_GE(config.memory_pool_init_size_mb(), 0.f);
@@ -424,6 +428,8 @@ std::unique_ptr<PaddlePredictor> CreatePaddlePredictor<
       std::string flag = "--fraction_of_gpu_memory_to_use=" +
                          std::to_string(fraction_of_gpu_memory);
       flags.push_back(flag);
+      flags.push_back("--selected_gpus=" +
+                      std::to_string(config.gpu_device_id()));
       VLOG(3) << "set flag: " << flag;
       framework::InitGflags(flags);
     }
@@ -830,3 +836,4 @@ USE_ANAKIN_CONVERTER(detection_out);
 USE_ANAKIN_CONVERTER(density_prior_box);
 USE_ANAKIN_CONVERTER(dropout);
 USE_ANAKIN_CONVERTER(sum);
+USE_ANAKIN_CONVERTER(bilinear_interp);

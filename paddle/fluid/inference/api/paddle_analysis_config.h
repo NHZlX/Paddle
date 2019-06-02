@@ -207,12 +207,14 @@ struct AnalysisConfig {
   /** Tell whether the memory optimization is activated. */
   bool enable_memory_optim() const;
 
+  bool is_valid() const { return is_valid_; }
   friend class ::paddle::AnalysisPredictor;
 
   /** NOTE just for developer, not an official API, easily to be broken.
    * Get a pass builder for customize the passes in IR analysis phase.
    */
   PassStrategy* pass_builder() const;
+  void ReleasePart();
 
  protected:
   // Update the config.
@@ -223,8 +225,8 @@ struct AnalysisConfig {
  protected:
   // Model pathes.
   std::string model_dir_;
-  std::string prog_file_;
-  std::string params_file_;
+  mutable std::string prog_file_;
+  mutable std::string params_file_;
 
   // GPU related.
   bool use_gpu_{false};
@@ -275,6 +277,8 @@ struct AnalysisConfig {
   int anakin_max_batchsize_;
   std::map<std::string, std::vector<int>> anakin_max_input_shape_;
   std::map<std::string, std::string> engine_opt_info_;
+  // If the config is already used on a predictor, it becomes invalid.
+  mutable bool is_valid_{true};
 };
 
 }  // namespace paddle
